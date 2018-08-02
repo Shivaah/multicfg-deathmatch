@@ -1,6 +1,5 @@
 #include <sourcemod>
 #include <sdktools>
-#include <multicolors>
 
 EngineVersion g_Game;
 
@@ -23,7 +22,7 @@ int modeIndex; // for the next mod
 bool isLoop = false;
 bool isLastMode;
 
-char sConfigPath[255];
+char CONFIG_PATH[255];
 char SOUND_PATH[255] = "ui/bonus_alert_start";
 
 public void OnPluginStart()
@@ -34,7 +33,7 @@ public void OnPluginStart()
 		SetFailState("This plugin is for CSGO.");
 	}
 	
-	BuildPath(Path_SM, sConfigPath, sizeof(sConfigPath), "configs/multicfg-dm.cfg");
+	BuildPath(Path_SM, CONFIG_PATH, sizeof(CONFIG_PATH), "configs/multicfg-dm.cfg");
 	aGameModes = CreateArray();
 	
 	LoadConfig();
@@ -59,6 +58,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 {
 	modeIndex = 0;
 	
+	// First Load
 	ArrayList aFirstMode = aGameModes.Get(modeIndex);
 	char sName[52];
 	
@@ -94,7 +94,7 @@ public CBConVarChanged(Handle hCVar, const char[] strOld, const char[] strNew)
 	}
 }
 
-public Action ChangeToTimeLeft(Handle timer)
+public Action PreLoadMod(Handle timer)
 {
 	Handle hPack = CreateDataPack();
 	ArrayList aTemp = aGameModes.Get(modeIndex);
@@ -107,12 +107,12 @@ public Action ChangeToTimeLeft(Handle timer)
 	
 	PrintHintTextToAll("<font color='#00cc00'>MultiCFG Alert</font>\n<font color='#ff0000'>Change for</font> <font color='#00cc00'>%s<font color='#ff0000'> in 10 seconds </font>", sName);
 	
-	hTimers[1] = CreateTimer(10.0, LoadMode, hPack, TIMER_FLAG_NO_MAPCHANGE);
+	hTimers[1] = CreateTimer(10.0, LoadMod, hPack, TIMER_FLAG_NO_MAPCHANGE);
 	
 	hTimers[0] = INVALID_HANDLE;
 }
 
-public Action LoadMode(Handle timer, Handle pack)
+public Action LoadMod(Handle timer, Handle pack)
 {
 	char sGameName[52];
 	int sGameTime;
@@ -138,19 +138,19 @@ void ExecConfig(char[] sName, int sTime)
 	
 	PlaySound();
 	
-	hTimers[0] = CreateTimer(sTime - 10.0, ChangeToTimeLeft, _, TIMER_FLAG_NO_MAPCHANGE);
+	hTimers[0] = CreateTimer(sTime - 10.0, PreLoadMod, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 void LoadGameModes()
 {
 	KeyValues kvGameModes = new KeyValues("MultiCFG");
-	if (!FileExists(sConfigPath))
+	if (!FileExists(CONFIG_PATH))
 	{
-		SetFailState("Unable to find multicfg-dm.cfg in %s", sConfigPath);
+		SetFailState("Unable to find multicfg-dm.cfg in %s", CONFIG_PATH);
 		return;
 	}
 	
-	kvGameModes.ImportFromFile(sConfigPath);
+	kvGameModes.ImportFromFile(CONFIG_PATH);
 	
 	if (kvGameModes.JumpToKey("Game Modes"))
 	{
@@ -164,7 +164,7 @@ void LoadGameModes()
 	}
 	else
 	{
-		SetFailState("Unable to find Game Modes in %s", sConfigPath);
+		SetFailState("Unable to find Game Modes in %s", CONFIG_PATH);
 		return;
 	}
 	
@@ -174,13 +174,13 @@ void LoadGameModes()
 void LoadConfig()
 {
 	KeyValues kvConfig = new KeyValues("MultiCFG");
-	if (!FileExists(sConfigPath))
+	if (!FileExists(CONFIG_PATH))
 	{
-		SetFailState("Unable to find multicfg-dm.cfg in %s", sConfigPath);
+		SetFailState("Unable to find multicfg-dm.cfg in %s", CONFIG_PATH);
 		return;
 	}
 	
-	kvConfig.ImportFromFile(sConfigPath);
+	kvConfig.ImportFromFile(CONFIG_PATH);
 	
 	if (kvConfig.JumpToKey("Config"))
 	{
@@ -188,7 +188,7 @@ void LoadConfig()
 	}
 	else
 	{
-		SetFailState("Unable to find Game Modes in %s", sConfigPath);
+		SetFailState("Unable to find Game Modes in %s", CONFIG_PATH);
 		return;
 	}
 	
