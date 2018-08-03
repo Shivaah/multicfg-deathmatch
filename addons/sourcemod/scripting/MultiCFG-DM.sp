@@ -8,7 +8,7 @@ public Plugin myinfo =
 	name = "MultiCFG DM", 
 	author = "SHiva", 
 	description = "DM Config Changer", 
-	version = "alpha-0.2", 
+	version = "0.2", 
 	url = "http://www.sourcemod.net/"
 };
 
