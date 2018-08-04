@@ -86,10 +86,7 @@ public CBConVarChanged(Handle hCVar, const char[] strOld, const char[] strNew)
 		for (int i = 0; i < 2; i++)
 		{
 			if (hTimers[i] != INVALID_HANDLE)
-			{
-				KillTimer(hTimers[i], false);
 				hTimers[i] = INVALID_HANDLE;
-			}
 		}
 	}
 }
