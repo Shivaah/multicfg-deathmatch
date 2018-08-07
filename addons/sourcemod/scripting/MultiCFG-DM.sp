@@ -20,7 +20,7 @@ ArrayList aGameModes;
 int modeIndex; // for the next mod
 
 bool isLoop = false;
-bool isLastMode;
+bool isLastMode = false;
 
 char CONFIG_PATH[255];
 char SOUND_PATH[255] = "ui/bonus_alert_start";
@@ -135,7 +135,8 @@ void ExecConfig(char[] sName, int sTime)
 	
 	PlaySound();
 	
-	hTimers[0] = CreateTimer(sTime - 10.0, PreLoadMod, _, TIMER_FLAG_NO_MAPCHANGE);
+	if (!isLastMode)
+		hTimers[0] = CreateTimer(sTime - 10.0, PreLoadMod, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 void LoadGameModes()
@@ -181,7 +182,7 @@ void LoadConfig()
 	
 	if (kvConfig.JumpToKey("Config"))
 	{
-		isLoop = view_as<bool>(KvGetNum(kvConfig, "Cycle loop"));
+		isLoop = view_as<bool>(KvGetNum(kvConfig, "Loop"));
 	}
 	else
 	{
