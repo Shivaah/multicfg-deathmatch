@@ -119,7 +119,6 @@ public Action Advert(Handle timer, Handle pack)
 	if (gTimeLeft >= 1)
 	{
 		PrintHintTextToAll(sAdvertMessage);
-	
 	}
 	else
 	{
