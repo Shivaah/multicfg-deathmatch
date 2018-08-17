@@ -8,19 +8,20 @@ public Plugin myinfo =
 	name = "MultiCFG DM", 
 	author = "SHiva", 
 	description = "DM Config Changer", 
-	version = "0.2", 
+	version = "0.2.2", 
 	url = "http://www.sourcemod.net/"
 };
 
-Handle hTimers[2];
-Handle hRestartGame = INVALID_HANDLE;
+Handle hTimers[3];
 
 ArrayList aGameModes;
 
-int modeIndex; // for the next mod
+int modeIndex;
+
+int gTimeLeft;
 
 bool isLoop = false;
-bool isLastMode = false;
+bool isLastMode;
 
 char CONFIG_PATH[255];
 char SOUND_PATH[255] = "ui/bonus_alert_start";
@@ -39,24 +40,28 @@ public void OnPluginStart()
 	LoadConfig();
 	LoadGameModes();
 	
-	hRestartGame = FindConVar("mp_restartgame");
-	
-	if (hRestartGame != INVALID_HANDLE)
-		HookConVarChange(hRestartGame, CBConVarChanged);
-	
 	HookEvent("round_start", Event_RoundStart, EventHookMode_Post);
-	HookEvent("round_end", Event_RoundEnd, EventHookMode_Pre);
 }
 
 public OnMapStart()
 {
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 3; i++)
 		hTimers[i] = INVALID_HANDLE;
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	for (int i = 0; i < 3; i++)
+	{
+		if (hTimers[i] != INVALID_HANDLE)
+		{
+			KillTimer(hTimers[i], false);
+			hTimers[i] = INVALID_HANDLE;
+		}
+	}
+	
 	modeIndex = 0;
+	gTimeLeft = 10;
 	
 	// First Load
 	ArrayList aFirstMode = aGameModes.Get(modeIndex);
@@ -67,31 +72,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	ExecConfig(sName, aFirstMode.Get(1));
 }
 
-public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
-{
-	for (int i = 0; i < 2; i++)
-	{
-		if (hTimers[i] != INVALID_HANDLE)
-		{
-			KillTimer(hTimers[i], false);
-			hTimers[i] = INVALID_HANDLE;
-		}
-	}
-}
-
-public CBConVarChanged(Handle hCVar, const char[] strOld, const char[] strNew)
-{
-	if (hCVar == hRestartGame)
-	{
-		for (int i = 0; i < 2; i++)
-		{
-			if (hTimers[i] != INVALID_HANDLE)
-				hTimers[i] = INVALID_HANDLE;
-		}
-	}
-}
-
-public Action PreLoadMod(Handle timer)
+public Action PreLoadNextMod(Handle timer)
 {
 	Handle hPack = CreateDataPack();
 	ArrayList aTemp = aGameModes.Get(modeIndex);
@@ -102,25 +83,52 @@ public Action PreLoadMod(Handle timer)
 	WritePackCell(hPack, aTemp.Get(1));
 	WritePackString(hPack, sName);
 	
-	PrintHintTextToAll("<font color='#00cc00'>MultiCFG Alert</font>\n<font color='#ff0000'>Change for</font> <font color='#00cc00'>%s<font color='#ff0000'> in 10 seconds </font>", sName);
+	hTimers[2] = CreateTimer(1.0, Advert, hPack, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 	
-	hTimers[1] = CreateTimer(10.0, LoadMod, hPack, TIMER_FLAG_NO_MAPCHANGE);
+	hTimers[1] = CreateTimer(10.0, LoadNextMod, hPack, TIMER_FLAG_NO_MAPCHANGE);
 	
 	hTimers[0] = INVALID_HANDLE;
 }
 
-public Action LoadMod(Handle timer, Handle pack)
+public Action LoadNextMod(Handle timer, Handle pack)
 {
-	char sGameName[52];
-	int sGameTime;
-	
 	ResetPack(pack);
-	sGameTime = ReadPackCell(pack);
+	
+	char sGameName[52];
+	int sGameTime = ReadPackCell(pack);
 	ReadPackString(pack, sGameName, sizeof(sGameName));
 	
 	ExecConfig(sGameName, sGameTime);
 	
 	hTimers[1] = INVALID_HANDLE;
+}
+public Action Advert(Handle timer, Handle pack)
+{
+	char sGameName[52];
+	char sAdvertMessage[255];
+	
+	ResetPack(pack)
+	ReadPackCell(pack);
+		
+	ReadPackString(pack, sGameName, sizeof(sGameName));
+	
+	gTimeLeft--;
+	
+	Format(sAdvertMessage, sizeof(sAdvertMessage), "<font color='#ff0000'>MultiCFG Alert</font>\nChanging for <font color='#66ff66'>%s</font> in  <font color='#66ff66'>%i</font> seconds", sGameName, gTimeLeft);
+	
+	if (gTimeLeft >= 1)
+	{
+		PrintHintTextToAll(sAdvertMessage);
+	
+	}
+	else
+	{
+		gTimeLeft = 10;
+		KillTimer(hTimers[2]);
+		
+		hTimers[2] = INVALID_HANDLE;
+	}
+	
 }
 
 void ExecConfig(char[] sName, int sTime)
@@ -136,7 +144,7 @@ void ExecConfig(char[] sName, int sTime)
 	PlaySound();
 	
 	if (!isLastMode)
-		hTimers[0] = CreateTimer(sTime - 10.0, PreLoadMod, _, TIMER_FLAG_NO_MAPCHANGE);
+		hTimers[0] = CreateTimer(sTime - 10.0, PreLoadNextMod, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 void LoadGameModes()
@@ -182,11 +190,11 @@ void LoadConfig()
 	
 	if (kvConfig.JumpToKey("Config"))
 	{
-		isLoop = view_as<bool>(KvGetNum(kvConfig, "Loop"));
+		isLoop = view_as<bool>(KvGetNum(kvConfig, "Cycle loop"));
 	}
 	else
 	{
-		SetFailState("Unable to find Game Modes in %s", CONFIG_PATH);
+		SetFailState("Unable to find Config in %s", CONFIG_PATH);
 		return;
 	}
 	
@@ -234,4 +242,4 @@ void PlaySound()
 		if (!IsFakeClient(i) && !IsClientObserver(i))
 			ClientCommand(i, "play *%s", SOUND_PATH);
 	}
-} 
+}
