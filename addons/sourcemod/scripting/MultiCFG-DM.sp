@@ -102,6 +102,7 @@ public Action LoadNextMod(Handle timer, Handle pack)
 	
 	hTimers[1] = INVALID_HANDLE;
 }
+
 public Action Advert(Handle timer, Handle pack)
 {
 	char sGameName[52];
@@ -126,8 +127,7 @@ public Action Advert(Handle timer, Handle pack)
 		KillTimer(hTimers[2]);
 		
 		hTimers[2] = INVALID_HANDLE;
-	}
-	
+	}	
 }
 
 void ExecConfig(char[] sName, int sTime)
