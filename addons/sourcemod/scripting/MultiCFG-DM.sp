@@ -8,17 +8,17 @@ public Plugin myinfo =
 	name = "MultiCFG DM", 
 	author = "SHiva", 
 	description = "DM Config Changer", 
-	version = "0.2.2", 
+	version = "0.3", 
 	url = "http://www.sourcemod.net/"
 };
 
-Handle hTimers[3];
+Handle hTimer;
 
 ArrayList aGameModes;
+char sGameName[52];
+int iGameTime;
 
-int modeIndex;
-
-int gTimeLeft;
+int modeIndex; // for the next mod
 
 bool isLoop = false;
 bool isLastMode;
@@ -40,110 +40,79 @@ public void OnPluginStart()
 	LoadConfig();
 	LoadGameModes();
 	
-	HookEvent("round_start", Event_RoundStart, EventHookMode_Post);
+	HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
 }
 
 public OnMapStart()
 {
-	for (int i = 0; i < 3; i++)
-		hTimers[i] = INVALID_HANDLE;
+	hTimer = INVALID_HANDLE;
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	for (int i = 0; i < 3; i++)
+	if (hTimer != INVALID_HANDLE)
 	{
-		if (hTimers[i] != INVALID_HANDLE)
-		{
-			KillTimer(hTimers[i], false);
-			hTimers[i] = INVALID_HANDLE;
-		}
+		KillTimer(hTimer, false);
+		hTimer = INVALID_HANDLE;
 	}
 	
 	modeIndex = 0;
-	gTimeLeft = 10;
 	
-	// First Load
-	ArrayList aFirstMode = aGameModes.Get(modeIndex);
-	char sName[52];
+	// first load
+	PrepareNextMod();
+	ExecConfig(true);
 	
-	aFirstMode.GetString(0, sName, sizeof(sName));
-	
-	ExecConfig(sName, aFirstMode.Get(1));
+	hTimer = CreateTimer(1.0, ControlFunc, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public Action PreLoadNextMod(Handle timer)
+public Action ControlFunc(Handle timer)
 {
-	Handle hPack = CreateDataPack();
-	ArrayList aTemp = aGameModes.Get(modeIndex);
-	char sName[52];
+	if(isLastMode)
+		return Plugin_Stop;
 	
-	aTemp.GetString(0, sName, sizeof(sName));
+	iGameTime--;
 	
-	WritePackCell(hPack, aTemp.Get(1));
-	WritePackString(hPack, sName);
-	
-	hTimers[2] = CreateTimer(1.0, Advert, hPack, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-	
-	hTimers[1] = CreateTimer(10.0, LoadNextMod, hPack, TIMER_FLAG_NO_MAPCHANGE);
-	
-	hTimers[0] = INVALID_HANDLE;
-}
-
-public Action LoadNextMod(Handle timer, Handle pack)
-{
-	ResetPack(pack);
-	
-	char sGameName[52];
-	int sGameTime = ReadPackCell(pack);
-	ReadPackString(pack, sGameName, sizeof(sGameName));
-	
-	ExecConfig(sGameName, sGameTime);
-	
-	hTimers[1] = INVALID_HANDLE;
-}
-
-public Action Advert(Handle timer, Handle pack)
-{
-	char sGameName[52];
-	char sAdvertMessage[255];
-	
-	ResetPack(pack)
-	ReadPackCell(pack);
-		
-	ReadPackString(pack, sGameName, sizeof(sGameName));
-	
-	gTimeLeft--;
-	
-	Format(sAdvertMessage, sizeof(sAdvertMessage), "<font color='#ff0000'>MultiCFG Alert</font>\nChanging for <font color='#66ff66'>%s</font> in  <font color='#66ff66'>%i</font> seconds", sGameName, gTimeLeft);
-	
-	if (gTimeLeft >= 1)
+	if(iGameTime <= 0)
 	{
-		PrintHintTextToAll(sAdvertMessage);
+		PrepareNextMod();
+		ExecConfig(true);
 	}
-	else
+	
+	if(iGameTime <= 10 && iGameTime > 0)
 	{
-		gTimeLeft = 10;
-		KillTimer(hTimers[2]);
+		char sAdvertMessage[255];
 		
-		hTimers[2] = INVALID_HANDLE;
-	}	
+		Format(sAdvertMessage, sizeof(sAdvertMessage), "<font color='#ff0000'>MultiCFG Alert</font>\nChanging to <font color='#66ff66'>%s</font> in <font color='#66ff66'>%i</font> seconds", sGameName, iGameTime);		
+	
+		if(iGameTime >= 1)
+		{
+			PrintHintTextToAll(sAdvertMessage);
+		}
+	}
+	
+	return Plugin_Handled;
 }
 
-void ExecConfig(char[] sName, int sTime)
+void ExecConfig(bool sound)
 {
 	char sCommand[255];
 	
-	Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sName);
+	Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sGameName);
 	
 	ServerCommand(sCommand);
 	
 	UpdateGameModeIndex();
 	
-	PlaySound();
+	if(sound)
+		PlaySound();	
+}
+
+void PrepareNextMod()
+{
+	ArrayList aTemp = aGameModes.Get(modeIndex);
 	
-	if (!isLastMode)
-		hTimers[0] = CreateTimer(sTime - 10.0, PreLoadNextMod, _, TIMER_FLAG_NO_MAPCHANGE);
+	iGameTime = aTemp.Get(1);
+	aTemp.GetString(0, sGameName, sizeof(sGameName));
 }
 
 void LoadGameModes()
@@ -241,4 +210,4 @@ void PlaySound()
 		if (!IsFakeClient(i) && !IsClientObserver(i))
 			ClientCommand(i, "play *%s", SOUND_PATH);
 	}
-}
+} 
