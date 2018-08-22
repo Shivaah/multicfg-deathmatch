@@ -62,10 +62,10 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	PrepareNextMod();
 	ExecConfig(true);
 	
-	hTimer = CreateTimer(1.0, ControlFunc, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+	hTimer = CreateTimer(1.0, CycleControl, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public Action ControlFunc(Handle timer)
+public Action CycleControl(Handle timer)
 {
 	if(isLastMode)
 		return Plugin_Stop;
