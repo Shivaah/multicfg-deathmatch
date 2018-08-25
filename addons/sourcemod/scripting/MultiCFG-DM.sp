@@ -15,10 +15,11 @@ public Plugin myinfo =
 Handle hTimer;
 
 ArrayList aGameModes;
-char sGameName[52];
-int iGameTime;
+char sCurrentGameName[52];
+char sNextGameName[52];
+int iCurrentGameTime;
 
-int modeIndex; // for the next mod
+int modeIndex;
 
 bool isLoop = false;
 bool isLastMode;
@@ -58,8 +59,8 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	
 	modeIndex = 0;
 	
-	// first load
-	PrepareNextMod();
+	// First Load
+	PrepareNextMode();
 	ExecConfig(true);
 	
 	hTimer = CreateTimer(1.0, CycleControl, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
@@ -70,21 +71,22 @@ public Action CycleControl(Handle timer)
 	if(isLastMode)
 		return Plugin_Stop;
 	
-	iGameTime--;
+	iCurrentGameTime--;
 	
-	if(iGameTime <= 0)
+	if(iCurrentGameTime <= 0)
 	{
-		PrepareNextMod();
+		PrepareNextMode();
+		
 		ExecConfig(true);
 	}
 	
-	if(iGameTime <= 10 && iGameTime > 0)
+	if(iCurrentGameTime <= 10 && iCurrentGameTime > 0)
 	{
 		char sAdvertMessage[255];
 		
-		Format(sAdvertMessage, sizeof(sAdvertMessage), "<font color='#ff0000'>MultiCFG Alert</font>\nChanging to <font color='#66ff66'>%s</font> in <font color='#66ff66'>%i</font> seconds", sGameName, iGameTime);		
+		Format(sAdvertMessage, sizeof(sAdvertMessage), "<font color='#ff0000'>Warmup  Mod</font>\nChanging to <font color='#66ff66'>%s</font> in <font color='#66ff66'>%i</font> seconds", sNextGameName, iCurrentGameTime);		
 	
-		if(iGameTime >= 1)
+		if(iCurrentGameTime >= 1)
 		{
 			PrintHintTextToAll(sAdvertMessage);
 		}
@@ -97,7 +99,7 @@ void ExecConfig(bool sound)
 {
 	char sCommand[255];
 	
-	Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sGameName);
+	Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sCurrentGameName);
 	
 	ServerCommand(sCommand);
 	
@@ -107,12 +109,17 @@ void ExecConfig(bool sound)
 		PlaySound();	
 }
 
-void PrepareNextMod()
-{
-	ArrayList aTemp = aGameModes.Get(modeIndex);
+void PrepareNextMode()
+{	
+	ArrayList aGameMode = aGameModes.Get(modeIndex);
+	ArrayList aNextGameMode = aGameModes.Get(modeIndex + 1);
 	
-	iGameTime = aTemp.Get(1);
-	aTemp.GetString(0, sGameName, sizeof(sGameName));
+	iCurrentGameTime = aGameMode.Get(1);
+	
+	// sCurrentGameName = sNextGameName; <---- need a bit modification on initialisation to apply this
+	aGameMode.GetString(0, sCurrentGameName, sizeof(sCurrentGameName));
+	
+	aNextGameMode.GetString(0, sNextGameName, sizeof(sNextGameName));
 }
 
 void LoadGameModes()
