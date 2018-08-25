@@ -23,6 +23,7 @@ int modeIndex;
 
 bool isLoop = false;
 bool isLastMode;
+bool isH3busDM;
 
 char CONFIG_PATH[255];
 char SOUND_PATH[255] = "ui/bonus_alert_start";
@@ -99,7 +100,10 @@ void ExecConfig(bool sound)
 {
 	char sCommand[255];
 	
-	Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sCurrentGameName);
+	if(!isH3busDM)
+		Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sCurrentGameName);
+	else
+		Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sCurrentGameName);
 	
 	ServerCommand(sCommand);
 	
@@ -166,12 +170,14 @@ void LoadConfig()
 	if (kvConfig.JumpToKey("Config"))
 	{
 		isLoop = view_as<bool>(KvGetNum(kvConfig, "Cycle loop"));
+		isH3busDM = view_as<bool>(KvGetNum(kvConfig, "H3busCompatibility"));
 	}
 	else
 	{
 		SetFailState("Unable to find Config in %s", CONFIG_PATH);
 		return;
 	}
+
 	
 	delete kvConfig;
 }
