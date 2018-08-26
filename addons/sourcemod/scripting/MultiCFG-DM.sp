@@ -22,7 +22,7 @@ int iCurrentGameTime;
 int modeIndex;
 
 bool isLoop = false;
-bool isLastMode;
+bool isLastMode = false;
 bool isH3busDM;
 
 char CONFIG_PATH[255];
@@ -37,6 +37,7 @@ public void OnPluginStart()
 	}
 	
 	BuildPath(Path_SM, CONFIG_PATH, sizeof(CONFIG_PATH), "configs/multicfg-dm.cfg");
+	
 	aGameModes = CreateArray();
 	
 	LoadConfig();
@@ -115,11 +116,18 @@ void ExecConfig(bool sound)
 
 void PrepareNextMode()
 {	
-	ArrayList aGameMode = aGameModes.Get(modeIndex);
-	ArrayList aNextGameMode = aGameModes.Get(modeIndex + 1);
+	ArrayList aGameMode = new ArrayList(512);
+	ArrayList aNextGameMode = new ArrayList(512);
+	
+	aGameMode = aGameModes.Get(modeIndex);
+	
+	if(modeIndex == (aGameModes.Length - 1))
+		aNextGameMode = aGameModes.Get(0);
+	else
+		aNextGameMode = aGameModes.Get(modeIndex+1);
 	
 	iCurrentGameTime = aGameMode.Get(1);
-	
+
 	// sCurrentGameName = sNextGameName; <---- need a bit modification on initialisation to apply this
 	aGameMode.GetString(0, sCurrentGameName, sizeof(sCurrentGameName));
 	
@@ -169,7 +177,7 @@ void LoadConfig()
 	
 	if (kvConfig.JumpToKey("Config"))
 	{
-		isLoop = view_as<bool>(KvGetNum(kvConfig, "Cycle loop"));
+		isLoop = view_as<bool>(KvGetNum(kvConfig, "Loop"));
 		isH3busDM = view_as<bool>(KvGetNum(kvConfig, "H3busCompatibility"));
 	}
 	else
