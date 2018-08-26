@@ -23,7 +23,6 @@ int modeIndex;
 
 bool isLoop = false;
 bool isLastMode = false;
-bool isH3busDM;
 
 char CONFIG_PATH[255];
 char SOUND_PATH[255] = "ui/bonus_alert_start";
@@ -101,10 +100,7 @@ void ExecConfig(bool sound)
 {
 	char sCommand[255];
 	
-	if(!isH3busDM)
-		Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sCurrentGameName);
-	else
-		Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sCurrentGameName);
+	Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sCurrentGameName);
 	
 	ServerCommand(sCommand);
 	
