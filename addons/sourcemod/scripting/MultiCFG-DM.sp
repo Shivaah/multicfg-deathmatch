@@ -174,7 +174,6 @@ void LoadConfig()
 	if (kvConfig.JumpToKey("Config"))
 	{
 		isLoop = view_as<bool>(KvGetNum(kvConfig, "Loop"));
-		isH3busDM = view_as<bool>(KvGetNum(kvConfig, "H3busCompatibility"));
 	}
 	else
 	{
