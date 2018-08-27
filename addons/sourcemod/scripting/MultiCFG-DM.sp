@@ -102,9 +102,18 @@ void ExecConfig(bool sound)
 	char sCommand[255];
 	
 	if(!isH3busDM)
-		Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sCurrentGameName);
+	{
+		char sConfigName[100];
+		sConfigName = sCurrentGameName;
+		
+		StrCat(sConfigName, sizeof(sConfigName), ".ini")
+
+		Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sConfigName);
+	}
 	else
+	{
 		Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sCurrentGameName);
+	}
 	
 	ServerCommand(sCommand);
 	
