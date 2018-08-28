@@ -4,7 +4,7 @@ MultiCFG is an external plugin for deathmatch, more particularly for the H3bus D
 
 # Configuration
 
-You will find the configuration file in the configs/, his name is multicfg-dm.cfg
+You will find the configuration file multicfg-dm.cfg in the configs folder.
 Theres is two sections : Config and Game Modes.
 
 ### Config Section
