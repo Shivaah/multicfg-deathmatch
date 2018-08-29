@@ -100,14 +100,13 @@ public Action CycleControl(Handle timer)
 void ExecConfig(bool sound)
 {
 	char sCommand[255];
+	char sConfigName[52];
+	
+	sConfigName = sCurrentGameName;
 	
 	if(!isH3busDM)
 	{
-		char sConfigName[100];
-		sConfigName = sCurrentGameName;
-		
 		StrCat(sConfigName, sizeof(sConfigName), ".ini")
-
 		Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sConfigName);
 	}
 	else
