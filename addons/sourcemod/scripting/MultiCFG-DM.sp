@@ -106,7 +106,7 @@ void ExecConfig(bool sound)
 	
 	if(!isH3busDM)
 	{
-		StrCat(sConfigName, sizeof(sConfigName), ".ini")
+		StrCat(sConfigName, sizeof(sConfigName), ".ini");
 		Format(sCommand, sizeof(sCommand), "dm_load \"%s\" \"respawn\"", sConfigName);
 	}
 	else
