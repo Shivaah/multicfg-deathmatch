@@ -111,7 +111,7 @@ void ExecConfig(bool sound)
 	}
 	else
 	{
-		Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sCurrentGameName);
+		Format(sCommand, sizeof(sCommand), "dm_load \"Game Modes\" \"%s\" \"respawn\"", sConfigName);
 	}
 	
 	ServerCommand(sCommand);
