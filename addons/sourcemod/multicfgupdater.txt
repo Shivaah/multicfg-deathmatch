@@ -1,0 +1,19 @@
+"Updater"
+{
+	"Information"
+	{
+		"Version"
+		{
+			"Latest"  	"0.4"
+			"Previous"	"0.3"
+		}
+		
+		"Notes"	"Init updater."
+	}
+	
+	"Files"
+	{
+		"Plugin"	"Path_SM/plugins/MultiCFG-DM.smx"
+		"Source"	"Path_SM/scripting/MultiCFG-DM.sp"
+	}
+}
