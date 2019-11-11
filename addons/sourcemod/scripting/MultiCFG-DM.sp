@@ -1,14 +1,25 @@
 #include <sourcemod>
 #include <sdktools>
+#undef REQUIRE_PLUGIN
+#undef REQUIRE_EXTENSIONS
+#tryinclude <SteamWorks>
+#tryinclude <updater>
+#define REQUIRE_PLUGIN
+#define REQUIRE_EXTENSIONS
+#pragma semicolon 1;
+#pragma newdecls required;
 
 EngineVersion g_Game;
+
+#define PLUGIN_VERSION "0.4"
+#define UPDATE_URL "https://raw.githubusercontent.com/Shivaah/multicfg-deathmatch/tree/master/addons/sourcemod/multicfgupdater.txt"
 
 public Plugin myinfo = 
 {
 	name = "MultiCFG DM", 
 	author = "SHiva", 
 	description = "DM Config Changer", 
-	version = "0.3", 
+	version = PLUGIN_VERSION, 
 	url = "http://www.sourcemod.net/"
 };
 
@@ -45,9 +56,23 @@ public void OnPluginStart()
 	HookEvent("round_start", Event_RoundStart, EventHookMode_PostNoCopy);
 }
 
-public OnMapStart()
+public void OnLibraryAdded(const char[] name)
+{
+    if (StrEqual(name,"updater",false))
+    {
+        Updater_AddPlugin(PLUGIN_VERSION);
+    }
+}
+
+public int Updater_OnPluginUpdated()
+{
+	ReloadPlugin(INVALID_HANDLE);
+}
+
+public void OnMapStart()
 {
 	hTimer = INVALID_HANDLE;
+	PrecacheSound(SOUND_PATH,true);
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -221,9 +246,15 @@ void UpdateGameModeIndex()
 
 void PlaySound()
 {
-	for (int i = 1; i <= GetClientCount(true); i++)
+	for (int i = 1; i < MaxClients+1; i++)
 	{
-		if (!IsFakeClient(i) && !IsClientObserver(i))
-			ClientCommand(i, "play *%s", SOUND_PATH);
+		if (IsValidEntity(i))
+			if (IsClientConnected(i))
+				if (IsClientInGame(i))
+					if (!IsFakeClient(i) && !IsClientObserver(i))
+					{
+						EmitSoundToClient(i, SOUND_PATH, i, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
+						//ClientCommand(i, "play *%s", SOUND_PATH);
+					}
 	}
-} 
+}
